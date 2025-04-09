@@ -57,3 +57,78 @@ void sum_by_threads_mutex(int& sum, const std::vector<int>& arr, size_t start, s
     std::lock_guard<std::mutex> lock(mtx);
     sum += partial_sum;
 }
+
+
+int main(int argc, char* argv[]) {
+    auto [size, thread_count] = process_args(argc, argv);
+
+    std::vector<int> arr(size);
+    fill_with_random(arr);
+    int expected_sum = std::accumulate(arr.begin(), arr.end(), 0);
+
+    std::vector<std::thread> threads;
+    size_t chunk = arr.size() / thread_count;
+
+    // Non-Atomic (Reduce-Like)
+    std::vector<int> thread_sums(thread_count, 0);
+    auto start = std::chrono::high_resolution_clock::now();
+    for (int i = 0; i < thread_count; ++i) {
+        size_t begin = i * chunk;
+        size_t end = (i == thread_count - 1) ? arr.size() : begin + chunk;
+        threads.emplace_back(sum_by_threads_non_atomic, std::ref(thread_sums), std::ref(arr), i, begin, end);
+    }
+    for (auto& t : threads) t.join();
+    int non_atomic_sum = std::accumulate(thread_sums.begin(), thread_sums.end(), 0);
+    auto end = std::chrono::high_resolution_clock::now();
+    auto non_atomic_time = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
+
+    // Atomic
+    std::atomic<int> atomic_sum = 0;
+    threads.clear();
+    start = std::chrono::high_resolution_clock::now();
+    for (int i = 0; i < thread_count; ++i) {
+        size_t begin = i * chunk;
+        size_t end = (i == thread_count - 1) ? arr.size() : begin + chunk;
+        threads.emplace_back(sum_by_threads_atomic, std::ref(atomic_sum), std::ref(arr), begin, end);
+    }
+    for (auto& t : threads) t.join();
+    end = std::chrono::high_resolution_clock::now();
+    auto atomic_time = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
+
+    // Mutex
+    int mutex_sum = 0;
+    threads.clear();
+    start = std::chrono::high_resolution_clock::now();
+    for (int i = 0; i < thread_count; ++i) {
+        size_t begin = i * chunk;
+        size_t end = (i == thread_count - 1) ? arr.size() : begin + chunk;
+        threads.emplace_back(sum_by_threads_mutex, std::ref(mutex_sum), std::ref(arr), begin, end);
+    }
+    for (auto& t : threads) t.join();
+    end = std::chrono::high_resolution_clock::now();
+    auto mutex_time = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
+
+    // Pretty Output without + signs
+    std::cout << std::format("{:-<26}{:-<14}\n", "", "");
+    std::cout << std::format("| {:<24} | {:>12} |\n", "Description", "Value");
+    std::cout << std::format("{:-<26}{:-<14}\n", "", "");
+    std::cout << std::format("| {:<24} | {:>12} |\n", "Expected Sum", expected_sum);
+    std::cout << std::format("{:-<26}{:-<14}\n", "", "");
+
+    std::cout << std::format("| {:<24} | {:>12} |\n", "Non-Atomic (Reduce-Like)", "");
+    std::cout << std::format("| {:<24} | {:>12} |\n", "  Total Sum", non_atomic_sum);
+    std::cout << std::format("| {:<24} | {:>12} |\n", "  Time (ms)", non_atomic_time);
+    std::cout << std::format("{:-<26}{:-<14}\n", "", "");
+
+    std::cout << std::format("| {:<24} | {:>12} |\n", "Atomic", "");
+    std::cout << std::format("| {:<24} | {:>12} |\n", "  Total Sum", atomic_sum.load());
+    std::cout << std::format("| {:<24} | {:>12} |\n", "  Time (ms)", atomic_time);
+    std::cout << std::format("{:-<26}{:-<14}\n", "", "");
+
+    std::cout << std::format("| {:<24} | {:>12} |\n", "Mutex", "");
+    std::cout << std::format("| {:<24} | {:>12} |\n", "  Total Sum", mutex_sum);
+    std::cout << std::format("| {:<24} | {:>12} |\n", "  Time (ms)", mutex_time);
+    std::cout << std::format("{:-<26}{:-<14}\n", "", "");
+
+    return 0;
+}
