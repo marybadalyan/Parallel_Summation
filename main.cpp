@@ -109,26 +109,26 @@ int main(int argc, char* argv[]) {
     auto mutex_time = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
 
     // Pretty Output without + signs
-    std::cout << std::format("{:-<26}{:-<14}\n", "", "");
+    std::cout << std::format("{:-<29}{:-<14}\n", "", "");
     std::cout << std::format("| {:<24} | {:>12} |\n", "Description", "Value");
-    std::cout << std::format("{:-<26}{:-<14}\n", "", "");
+    std::cout << std::format("{:-<29}{:-<14}\n", "", "");
     std::cout << std::format("| {:<24} | {:>12} |\n", "Expected Sum", expected_sum);
-    std::cout << std::format("{:-<26}{:-<14}\n", "", "");
+    std::cout << std::format("{:-<29}{:-<14}\n", "", "");
 
     std::cout << std::format("| {:<24} | {:>12} |\n", "Non-Atomic (Reduce-Like)", "");
     std::cout << std::format("| {:<24} | {:>12} |\n", "  Total Sum", non_atomic_sum);
     std::cout << std::format("| {:<24} | {:>12} |\n", "  Time (ms)", non_atomic_time);
-    std::cout << std::format("{:-<26}{:-<14}\n", "", "");
+    std::cout << std::format("{:-<29}{:-<14}\n", "", "");
 
     std::cout << std::format("| {:<24} | {:>12} |\n", "Atomic", "");
     std::cout << std::format("| {:<24} | {:>12} |\n", "  Total Sum", atomic_sum.load());
     std::cout << std::format("| {:<24} | {:>12} |\n", "  Time (ms)", atomic_time);
-    std::cout << std::format("{:-<26}{:-<14}\n", "", "");
+    std::cout << std::format("{:-<29}{:-<14}\n", "", "");
 
     std::cout << std::format("| {:<24} | {:>12} |\n", "Mutex", "");
     std::cout << std::format("| {:<24} | {:>12} |\n", "  Total Sum", mutex_sum);
     std::cout << std::format("| {:<24} | {:>12} |\n", "  Time (ms)", mutex_time);
-    std::cout << std::format("{:-<26}{:-<14}\n", "", "");
+    std::cout << std::format("{:-<29}{:-<14}\n", "", "");
 
     return 0;
 }
